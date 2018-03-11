@@ -21,7 +21,7 @@ function convert_telnet_to_bytes(data) {
   return buf;
 }
 
-net.createServer(function(sock) {
+server = net.createServer(function(sock) {
 
     // We have a connection - a socket object is assigned to the connection automatically
     console.log('CONNECTED: ' + sock.remoteAddress +':'+ sock.remotePort);
@@ -34,16 +34,41 @@ net.createServer(function(sock) {
         flowControl:false, autoOpen: false
     });
 
+    port.on('error', function(err) {
+      console.log('serialport err: ' + err);
+    });
+    port.on('close', function() {
+      console.log('serialport closed');
+      server.close(function() {
+        console.log("DONE");
+      });
+    });
+
     console.log("Connect to TTY: "+ port);
     port.open(function (error) {
       if (error) {
         console.log('Failed to open: '+error);
+        sock.write(Buffer(error.message), null, function (err) {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log("err sent");
+          }
+        });
+        sock.destroy();
+        //server.close();
       } else {
         console.log('open');
         port.on('data', function(data) {
           //console.log('data type: ' + Object.prototype.toString.call( data));
           //console.log('output received: ' + (typeof data) +data);
-          sock.write(data);
+          sock.write(data, null, function (err) {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log("data sent");
+            }
+          });
         });
       }
     });
