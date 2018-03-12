@@ -2,9 +2,14 @@ var net = require('net');
 var SerialPort = require("serialport");
 
 var HOST = '127.0.0.1';
+var HOST = '0.0.0.0'; // listen on all interfaces.
 var PORT = 6969;
 //var TTY_PORT = "/dev/ttyMFD1"; // serial comms on the galileo/edison.
 var TTY_PORT = "/dev/tty.usbserial-DN026H8V"; // local roomba usb cable.
+//var TTY_PORT = "/dev/tty.usbmodem1421" // arduino (note that arduino can only communicate in 19200 baud)
+//var BAUD = 19200; // NOTE: This baud gets set when you long press the power button for 10 seconds.
+var BAUD = 115200; // the default baud.
+
 // Create a server instance, and chain the listen function to it
 // The function passed to net.createServer() becomes the event handler for the 'connection' event
 // The sock object the callback function receives UNIQUE for each connection
@@ -29,9 +34,9 @@ server = net.createServer(function(sock) {
 
     var port = new SerialPort(TTY_PORT, {
         //Defaults for Roomba Open Interface:
-        baudRate:115200, dataBits:8,
+        baudRate:BAUD, dataBits:8,
         parity:'none', stopBits:1,
-        flowControl:false, autoOpen: false
+        flowControl:true, autoOpen: false
     });
 
     port.on('error', function(err) {
@@ -60,8 +65,9 @@ server = net.createServer(function(sock) {
       } else {
         console.log('open');
         port.on('data', function(data) {
-          //console.log('data type: ' + Object.prototype.toString.call( data));
-          //console.log('output received: ' + (typeof data) +data);
+          console.log('data type: ' + Object.prototype.toString.call( data));
+          console.log('output received: '+ data.length + 'bytes');
+          console.log(data);
           sock.write(data, null, function (err) {
             if (err) {
               console.log(err);
@@ -77,7 +83,8 @@ server = net.createServer(function(sock) {
     sock.on('data', function(data) {
       console.log('data type: ' + Object.prototype.toString.call( data));
       bytes = convert_telnet_to_bytes(data);
-      console.log('input received: ' + (typeof data) +data);
+      console.log('input received:');
+      console.log(bytes);
       port.write(bytes, function(err) {
         if(err) {
           console.log('err ' + err);
