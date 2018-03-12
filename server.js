@@ -4,11 +4,11 @@ var SerialPort = require("serialport");
 var HOST = '127.0.0.1';
 var HOST = '0.0.0.0'; // listen on all interfaces.
 var PORT = 6969;
-//var TTY_PORT = "/dev/ttyMFD1"; // serial comms on the galileo/edison.
-var TTY_PORT = "/dev/tty.usbserial-DN026H8V"; // local roomba usb cable.
+var TTY_PORT = "/dev/ttyMFD1"; // serial comms on the galileo/edison.
+//var TTY_PORT = "/dev/tty.usbserial-DN026H8V"; // local roomba usb cable.
 //var TTY_PORT = "/dev/tty.usbmodem1421" // arduino (note that arduino can only communicate in 19200 baud)
-//var BAUD = 19200; // NOTE: This baud gets set when you long press the power button for 10 seconds.
-var BAUD = 115200; // the default baud.
+var BAUD = 19200; // NOTE: This baud gets set when you long press the power button for 10 seconds.
+//var BAUD = 115200; // the default baud.
 
 // Create a server instance, and chain the listen function to it
 // The function passed to net.createServer() becomes the event handler for the 'connection' event
@@ -17,7 +17,11 @@ var BAUD = 115200; // the default baud.
 function convert_telnet_to_bytes(data) {
   str = String.fromCharCode.apply(null, data);
   parts = str.split(',');
-  buf = Buffer.allocUnsafe(parts.length);
+  try {
+  	buf = Buffer.allocUnsafe(parts.length);
+  } catch (error) {
+     buf = Buffer(parts.length);
+  }
   for(i=0; i < parts.length; i++) {
     num = parseInt(parts[i].trim(), 10);
     buf.writeUInt8(num, i);
